@@ -14,23 +14,60 @@ Organizations:
         Type: Signature
         Rule: "OR('OrdererMSP.member')"
 
-  - &org
-    Name: orgMSP
-    ID: orgMSP
-    MSPDir: crypto-config/peerOrganizations/org.delivery-network.com/msp
+  - &restaurant
+    Name: restaurantMSP
+    ID: restaurantMSP
+    MSPDir: crypto-config/peerOrganizations/restaurant.delivery-network.com/msp
     Policies:
       Readers:
         Type: Signature
-        Rule: "OR('orgMSP.admin', 'orgMSP.peer', 'orgMSP.client')"
+        Rule: "OR('restaurantMSP.admin', 'restaurantMSP.peer', 'restaurantMSP.client')"
       Writers:
         Type: Signature
-        Rule: "OR('orgMSP.admin', 'orgMSP.peer', 'orgMSP.client')"
+        Rule: "OR('restaurantMSP.admin', 'restaurantMSP.peer', 'restaurantMSP.client')"
       Admins:
         Type: Signature
-        Rule: "OR('orgMSP.admin', 'orgMSP.peer', 'orgMSP.client')"
+        Rule: "OR('restaurantMSP.admin', 'restaurantMSP.peer', 'restaurantMSP.client')"
     AnchorPeers:
-      - Host: peer0.org.delivery-network.com
+      - Host: peer0.restaurant.delivery-network.com
+        Port: 11051
+
+  - &squad
+    Name: squadMSP
+    ID: squadMSP
+    MSPDir: crypto-config/peerOrganizations/squad.delivery-network.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('squadMSP.admin', 'squadMSP.peer', 'squadMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('squadMSP.admin', 'squadMSP.peer', 'squadMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('squadMSP.admin', 'squadMSP.peer', 'squadMSP.client')"
+    AnchorPeers:
+      - Host: peer0.squad.delivery-network.com
+        Port: 13051
+
+  - &customer
+    Name: customerMSP
+    ID: customerMSP
+    MSPDir: crypto-config/peerOrganizations/customer.delivery-network.com/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('customerMSP.admin', 'customerMSP.peer', 'customerMSP.client')"
+      Writers:
+        Type: Signature
+        Rule: "OR('customerMSP.admin', 'customerMSP.peer', 'customerMSP.client')"
+      Admins:
+        Type: Signature
+        Rule: "OR('customerMSP.admin', 'customerMSP.peer', 'customerMSP.client')"
+    AnchorPeers:
+      - Host: peer0.customer.delivery-network.com
         Port: 7051
+
 
 #Capabilities
 
@@ -125,13 +162,17 @@ Profiles:
     Consortiums:
       DeliveryConsortium:
         Organizations:
-          - *org
+          - *restaurant
+          - *squad
+          - *customer
 
   DeliveryChannel:
     Consortium: DeliveryConsortium
     Application:
       <<: *ApplicationDefaults
       Organizations:
-        - *org
+        - *restaurant
+        - *squad
+        - *customer
       Capabilities:
         <<: *ApplicationCapabilities

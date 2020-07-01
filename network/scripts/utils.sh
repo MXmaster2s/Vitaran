@@ -1,14 +1,15 @@
-
 # This is a collection of bash functions used by different scripts
 
 ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/ordererOrganizations/delivery-network.com/orderers/orderer.delivery-network.com/msp/tlscacerts/tlsca.delivery-network.com-cert.pem
-PEER0_ORG_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org.delivery-network.com/peers/peer0.org.delivery-network.com/tls/ca.crt
+PEER0_CUSTOMER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/customer.delivery-network.com/peers/peer0.customer.delivery-network.com/tls/ca.crt
+PEER0_SQUAD_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/squad.delivery-network.com/peers/peer0.squad.delivery-network.com/tls/ca.crt
+PEER0_RESTAURANT_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/restaurant.delivery-network.com/peers/peer0.restaurant.delivery-network.com/tls/ca.crt
 
 # verify the result of the end-to-end test
 verifyResult() {
   if [ "$1" -ne 0 ]; then
     echo "!!!!!!!!!!!!!!! "$2" !!!!!!!!!!!!!!!!"
-    echo "========= ERROR !!! FAILED to Execute Delivery Network Bootstrap ==========="
+    echo "========= ERROR !!! FAILED to execute Delivery Network Bootstrap ==========="
     echo
     exit 1
   fi
@@ -24,17 +25,36 @@ setOrdererGlobals() {
 setGlobals() {
   PEER=$1
   ORG=$2
-  if [ "$ORG" == 'org' ]; then
-    CORE_PEER_LOCALMSPID="orgMSP"
-    CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_ORG_CA
-    CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org.delivery-network.com/users/Admin@org.delivery-network.com/msp
+  if [ "$ORG" == 'customer' ]; then
+    CORE_PEER_LOCALMSPID="customerMSP"
+    CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_CUSTOMER_CA
+    CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/customer.delivery-network.com/users/Admin@customer.delivery-network.com/msp
     if [ "$PEER" -eq 0 ]; then
-      CORE_PEER_ADDRESS=peer0.org.delivery-network.com:7051
+      CORE_PEER_ADDRESS=peer0.customer.delivery-network.com:7051
     else
-      CORE_PEER_ADDRESS=peer1.org.delivery-network.com:8051
+      CORE_PEER_ADDRESS=peer1.customer.delivery-network.com:8051
+    fi
+  elif [ "$ORG" == 'squad' ]; then
+    CORE_PEER_LOCALMSPID="squadMSP"
+    CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_SQUAD_CA
+    CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/squad.delivery-network.com/users/Admin@squad.delivery-network.com/msp
+    if [ "$PEER" -eq 0 ]; then
+      CORE_PEER_ADDRESS=peer0.squad.delivery-network.com:13051
+    fi
+    if [ "$PEER" -eq 1 ]; then
+      CORE_PEER_ADDRESS=peer1.squad.delivery-network.com:14051
+    fi
+  elif [ "$ORG" == 'restaurant' ]; then
+    CORE_PEER_LOCALMSPID="restaurantMSP"
+    CORE_PEER_TLS_ROOTCERT_FILE=$PEER0_RESTAURANT_CA
+    CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/restaurant.delivery-network.com/users/Admin@restaurant.delivery-network.com/msp
+    if [ "$PEER" -eq 0 ]; then
+      CORE_PEER_ADDRESS=peer0.restaurant.delivery-network.com:11051
+    else
+      CORE_PEER_ADDRESS=peer1.restaurant.delivery-network.com:12051
     fi
   else
-    echo "================== ERROR !!! Unknown Organisation =================="
+    echo "================== ERROR !!! ORG Unknown =================="
   fi
 }
 
@@ -46,12 +66,12 @@ updateAnchorPeers() {
   if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
     set -x
     peer channel update -o orderer.delivery-network.com:7050 -c "$CHANNEL_NAME" -f ./channel-artifacts/${CORE_PEER_LOCALMSPID}anchors.tx >&log.txt
-    res=0
+    res=$?
     set +x
   else
     set -x
     peer channel update -o orderer.delivery-network.com:7050 -c "$CHANNEL_NAME" -f ./channel-artifacts/${CORE_PEER_LOCALMSPID}anchors.tx --tls "$CORE_PEER_TLS_ENABLED" --cafile $ORDERER_CA >&log.txt
-    res=0
+    res=$?
     set +x
   fi
   cat log.txt
@@ -69,7 +89,7 @@ joinChannelWithRetry() {
 
   set -x
   peer channel join -b "$CHANNEL_NAME".block >&log.txt
-  res=0
+  res=$?
   set +x
   cat log.txt
   if [ $res -ne 0 -a "$COUNTER" -lt "$MAX_RETRY" ]; then
@@ -90,7 +110,7 @@ installChaincode() {
   VERSION=${3:-1.0}
   set -x
   peer chaincode install -n contract -v "${VERSION}" -l "${LANGUAGE}" -p "${CC_SRC_PATH}" >&log.txt
-  res=0
+  res=$?
   set +x
   cat log.txt
   verifyResult $res "Chaincode installation on peer${PEER}.${ORG} has failed"
@@ -109,13 +129,13 @@ instantiateChaincode() {
   # the "-o" option
   if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
     set -x
-    peer chaincode instantiate -o orderer.delivery-network.com:7050 -C "$CHANNEL_NAME" -n contract -l "${LANGUAGE}" -v "${VERSION}" -c '{"Args":["org.delivery-network.contract:instantiate"]}' -P "OR ('orgMSP.member)" >&log.txt
-    res=0
+    peer chaincode instantiate -o orderer.delivery-network.com:7050 -C "$CHANNEL_NAME" -n contract -l "${LANGUAGE}" -v "${VERSION}" -c '{"Args":["org.delivery-network.contract:instantiate"]}' -P "OR ('restaurantMSP.member','squadMSP.member','customerMSP.member')">&log.txt
+    res=$?
     set +x
   else
     set -x
-    peer chaincode instantiate -o orderer.delivery-network.com:7050 --tls "$CORE_PEER_TLS_ENABLED" --cafile $ORDERER_CA -C $CHANNEL_NAME -n contract -l ${LANGUAGE} -v ${VERSION} -c '{"Args":["org.delivery-network.contract:instantiate"]}' -P "OR ('orgMSP.member)" >&log.txt
-    res=0
+    peer chaincode instantiate -o orderer.delivery-network.com:7050 --tls "$CORE_PEER_TLS_ENABLED" --cafile $ORDERER_CA -C $CHANNEL_NAME -n contract -l ${LANGUAGE} -v ${VERSION} -c '{"Args":["org.delivery-network.contract:instantiate"]}' -P "OR ('restaurantMSP.member','squadMSP.member','customerMSP.member')">&log.txt
+    res=$?
     set +x
   fi
   cat log.txt
@@ -132,13 +152,13 @@ upgradeChaincode() {
 
   if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
     set -x
-    peer chaincode upgrade -o orderer.delivery-network.com:7050 -C $CHANNEL_NAME -n contract -l ${LANGUAGE} -v ${VERSION} -p ${CC_SRC_PATH} -c '{"Args":["org.delivery-network.contract:instantiate"]}' -P "OR ('orgMSP.member)" >&log.txt
-    res=0
+    peer chaincode upgrade -o orderer.delivery-network.com:7050 -C $CHANNEL_NAME -n contract -l ${LANGUAGE} -v ${VERSION} -p ${CC_SRC_PATH} -c '{"Args":["org.delivery-network.com.contract:instantiate"]}' -P "OR ('restaurantMSP.member','squadMSP.member','customerMSP.member')" >&log.txt
+    res=$?
     set +x
   else
     set -x
-    peer chaincode upgrade -o orderer.delivery-network.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n contract -l ${LANGUAGE} -v ${VERSION} -p ${CC_SRC_PATH} -c '{"Args":["org.delivery-network.contract:instantiate"]}' -P "OR ('orgMSP.member)" >&log.txt
-    res=0
+    peer chaincode upgrade -o orderer.delivery-network.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n contract -l ${LANGUAGE} -v ${VERSION} -p ${CC_SRC_PATH} -c '{"Args":["org.delivery-network.com.contract:instantiate"]}' -P "OR ('restaurantMSP.member','squadMSP.member','customerMSP.member')" >&log.txt
+    res=$?
     set +x
   fi
   cat log.txt
@@ -165,7 +185,7 @@ chaincodeQuery() {
     echo "Attempting to Query peer${PEER}.${ORG} ...$(($(date +%s) - starttime)) secs"
     set -x
     peer chaincode query -C $CHANNEL_NAME -n contract -c '{"Args":["org.delivery-network.contract:instantiate"]}' >&log.txt
-    res=0
+    res=$?
     set +x
     test $res -eq 0 && VALUE=$(cat log.txt | awk '/Query Result/ {print $NF}')
     test "$VALUE" = "$EXPECTED_RESULT" && let rc=0
@@ -191,21 +211,21 @@ chaincodeQuery() {
 # Accepts as many peer/org pairs as desired and requests endorsement from each
 chaincodeInvoke() {
   parsePeerConnectionParameters $@
-  res=0
-  verifyResult $res "Invoke transaction failed on channel '$CHANNEL_NAME' due to uneven number of peer and organisation parameters "
+  res=$?
+  verifyResult $res "Invoke transaction failed on channel '$CHANNEL_NAME' due to uneven number of peer and org parameters "
 
   # while 'peer chaincode' command can get the orderer endpoint from the
   # peer (if join was successful), let's supply it directly as we know
   # it using the "-o" option
   if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
     set -x
-    peer chaincode invoke -o orderer.delivery-network.com:7050 -C $CHANNEL_NAME -n contract $PEER_CONN_PARMS -c '{"Args":["org.delivery-network.contract:createStudent","0001","Aakash Bansal","connect@aakashbansal.com","15"]}' >&log.txt
-    res=0
+    peer chaincode invoke -o orderer.delivery-network.com:7050 -C $CHANNEL_NAME -n contract $PEER_CONN_PARMS -c '{"Args":["org.delivery-network.contract:createRestaurant","0001","Mummys Yummy Food","connect@food.com"]}' >&log.txt
+    res=$?
     set +x
   else
     set -x
-    peer chaincode invoke -o orderer.delivery-network.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n contract $PEER_CONN_PARMS -c '{"Args":["org.delivery-network.contract:createStudent","0001","Aakash Bansal","connect@aakashbansal.com"]}' >&log.txt
-    res=0
+    peer chaincode invoke -o orderer.delivery-network.com:7050 --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA -C $CHANNEL_NAME -n contract $PEER_CONN_PARMS -c '{"Args":["org.delivery-network.contract:createRestaurant","0001","Mummys Yummy Food","connect@food.com"]}' >&log.txt
+    res=$?
     set +x
   fi
   cat log.txt

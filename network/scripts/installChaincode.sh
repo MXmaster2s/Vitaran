@@ -7,7 +7,7 @@ echo "\___ \    | |     / _ \   | |_) |   | |  "
 echo " ___) |   | |    / ___ \  |  _ <    | |  "
 echo "|____/    |_|   /_/   \_\ |_| \_\   |_|  "
 echo
-echo "Deploying chaincode contract on VITARAN Network"
+echo "Deploying Chaincode contract On Delivery Network"
 echo
 CHANNEL_NAME="$1"
 DELAY="$2"
@@ -21,7 +21,7 @@ TYPE="$5"
 : ${TYPE="basic"}
 
 LANGUAGE=`echo "$LANGUAGE" | tr [:upper:] [:lower:]`
-ORGS="org"
+ORGS="customer squad restaurant"
 TIMEOUT=15
 
 if [ "$TYPE" = "basic" ]; then
@@ -35,16 +35,20 @@ echo "Channel name : "$CHANNEL_NAME
 # import utils
 . scripts/utils.sh
 
-## Install new version of chaincode on peer0 of all organications making them endorsers
-echo "Installing chaincode on peer0.org.delivery-network.com ..."
-installChaincode 0 'org' $VERSION
+## Install new version of chaincode on peer0 of all 5 orgs making them endorsers
+echo "Installing chaincode on peer0.restaurant.delivery-network.com ..."
+installChaincode 0 'restaurant' $VERSION
+echo "Installing chaincode on peer0.squad.delivery-network.com ..."
+installChaincode 0 'squad' $VERSION
+echo "Installing chaincode on peer0.customer.delivery-network.com ..."
+installChaincode 0 'customer' $VERSION
 
-# Instantiate chaincode on the channel using peer0.org
-echo "Instantiating chaincode on channel using peer0.org.delivery-network.com ..."
-instantiateChaincode 0 'org' $VERSION
+# Instantiate chaincode on the channel using peer0.restaurant
+echo "Instantiating chaincode on channel using peer0.restaurant.delivery-network.com ..."
+instantiateChaincode 0 'restaurant' $VERSION
 
 echo
-echo "========= All good, chaincode contract is now installed & instantiated on VITARAN Network =========== "
+echo "========= All GOOD, Chaincode contract Is Now Installed & Instantiated On Delivery Network =========== "
 echo
 
 echo

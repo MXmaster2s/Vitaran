@@ -14,15 +14,15 @@ DELAY="$2"
 LANGUAGE="$3"
 TIMEOUT="$4"
 VERBOSE="$5"
-: ${CHANNEL_NAME:="DeliveryChannel"}
+: ${CHANNEL_NAME:="deliverychannel"}
 : ${DELAY:="5"}
 : ${LANGUAGE:="node"}
-: ${TIMEOUT:="15"}
+: ${TIMEOUT:="36000"}
 : ${VERBOSE:="false"}
 LANGUAGE=$(echo "$LANGUAGE" | tr [:upper:] [:lower:])
 COUNTER=1
 MAX_RETRY=15
-ORGS="org"
+ORGS="customer squad restaurant"
 
 if [ "$LANGUAGE" = "node" ]; then
   CC_SRC_PATH="/opt/gopath/src/github.com/hyperledger/fabric/peer/chaincode/"
@@ -34,16 +34,16 @@ echo "Channel name : "$CHANNEL_NAME
 . scripts/utils.sh
 
 createChannel() {
-  setGlobals 0 'org'
+  setGlobals 0 'restaurant'
   if [ -z "$CORE_PEER_TLS_ENABLED" -o "$CORE_PEER_TLS_ENABLED" = "false" ]; then
     set -x
     peer channel create -o orderer.delivery-network.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/channel.tx >&log.txt
-    res=0    
+    res=$?
     set +x
   else
     set -x
     peer channel create -o orderer.delivery-network.com:7050 -c $CHANNEL_NAME -f ./channel-artifacts/channel.tx --tls $CORE_PEER_TLS_ENABLED --cafile $ORDERER_CA >&log.txt
-    res=0
+    res=$?
     set +x
   fi
   cat log.txt
@@ -62,6 +62,7 @@ joinChannel() {
       echo
     done
   done
+  #joinChannelWithRetry 1 customer   #UPDATE REQUIRED
 }
 
 ## Create channel
@@ -72,13 +73,16 @@ createChannel
 echo "Having all peers join the channel..."
 joinChannel
 
-## Set the anchor peers for each organisation in the channel
-echo "Updating anchor peers for org..."
-updateAnchorPeers 0 'org'
-
+## Set the anchor peers for each org in the channel
+echo "Updating anchor peers for CUSTOMER..."
+updateAnchorPeers 0 'customer'
+echo "Updating anchor peers for RESTAURANT..."
+updateAnchorPeers 0 'restaurant'
+echo "Updating anchor peers for SQUAD..."
+updateAnchorPeers 0 'squad'
 
 echo
-echo "========= All GOOD, Hyperledger Fabric Certification Network Is Now Up and Running! =========== "
+echo "========= All GOOD, Hyperledger Fabric Delivery Network Is Now Up and Running! =========== "
 echo
 
 echo

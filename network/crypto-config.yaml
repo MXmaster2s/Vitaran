@@ -3,9 +3,26 @@ OrdererOrgs:
     Domain: delivery-network.com
     Specs:
       - Hostname: orderer
+
 PeerOrgs:
- - Name: org
-   Domain: org.delivery-network.com
+ - Name: restaurant
+   Domain: restaurant.delivery-network.com
+   EnableNodeOUs: true
+   Template:
+      Count: 2
+   Users:
+      Count: 1
+
+ - Name: squad
+   Domain: squad.delivery-network.com
+   EnableNodeOUs: true
+   Template:
+      Count: 2
+   Users:
+      Count: 1
+
+ - Name: customer
+   Domain: customer.delivery-network.com
    EnableNodeOUs: true
    Template:
       Count: 2
