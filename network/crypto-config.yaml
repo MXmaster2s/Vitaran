@@ -1,0 +1,13 @@
+OrdererOrgs:
+  - Name: Orderer
+    Domain: delivery-network.com
+    Specs:
+      - Hostname: orderer
+PeerOrgs:
+ - Name: org
+   Domain: org.delivery-network.com
+   EnableNodeOUs: true
+   Template:
+      Count: 2
+   Users:
+      Count: 1

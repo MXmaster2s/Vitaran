@@ -1,0 +1,75 @@
+version: '2'
+
+services:
+
+  orderer.delivery-network.com:
+    container_name: orderer.delivery-network.com
+    image: hyperledger/fabric-orderer:latest
+    environment:
+      - FABRIC_LOGGING_SPEC=INFO
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/var/hyperledger/orderer/msp
+      # enabled TLS
+      - ORDERER_GENERAL_TLS_ENABLED=false
+      - ORDERER_GENERAL_TLS_PRIVATEKEY=/var/hyperledger/orderer/tls/server.key
+      - ORDERER_GENERAL_TLS_CERTIFICATE=/var/hyperledger/orderer/tls/server.crt
+      - ORDERER_GENERAL_TLS_ROOTCAS=[/var/hyperledger/orderer/tls/ca.crt]
+      #- GODEBUG=netdns=go
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: orderer
+    volumes:
+    - ../channel-artifacts/genesis.block:/var/hyperledger/orderer/orderer.genesis.block
+    - ../crypto-config/ordererOrganizations/delivery-network.com/orderers/orderer.delivery-network.com/msp:/var/hyperledger/orderer/msp
+    - ../crypto-config/ordererOrganizations/delivery-network.com/orderers/orderer.delivery-network.com/tls/:/var/hyperledger/orderer/tls
+    - orderer.delivery-network.com:/var/hyperledger/production/orderer
+    ports:
+      - 7050:7050
+
+  peer0.org.delivery-network.com:
+    container_name: peer0.org.delivery-network.com
+    extends:
+      file: docker-compose-peer.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer0.org.delivery-network.com
+      - CORE_PEER_ADDRESS=peer0.org.delivery-network.com:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org.delivery-network.com:7053
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7053
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer1.org.delivery-network.com:8051
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer0.org.delivery-network.com:7051
+      - CORE_PEER_LOCALMSPID=orgMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/org.delivery-network.com/peers/peer0.org.delivery-network.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/org.delivery-network.com/peers/peer0.org.delivery-network.com/tls:/etc/hyperledger/fabric/tls
+        - peer0.org.delivery-network.com:/var/hyperledger/production
+    ports:
+      - 7051:7051
+      - 7053:7053
+
+  peer1.org.delivery-network.com:
+    container_name: peer1.org.delivery-network.com
+    extends:
+      file: docker-compose-peer.yaml
+      service: peer-base
+    environment:
+      - CORE_PEER_ID=peer1.org.delivery-network.com
+      - CORE_PEER_ADDRESS=peer1.org.delivery-network.com:8051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:8051
+      - CORE_PEER_CHAINCODEADDRESS=peer0.org.delivery-network.com:8053
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:8053
+      - CORE_PEER_GOSSIP_EXTERNALENDPOINT=peer1.org.delivery-network.com:8051
+      - CORE_PEER_GOSSIP_BOOTSTRAP=peer0.org.delivery-network.com:7051
+      - CORE_PEER_LOCALMSPID=orgMSP
+    volumes:
+        - /var/run/:/host/var/run/
+        - ../crypto-config/peerOrganizations/org.delivery-network.com/peers/peer1.org.delivery-network.com/msp:/etc/hyperledger/fabric/msp
+        - ../crypto-config/peerOrganizations/org.delivery-network.com/peers/peer1.org.delivery-network.com/tls:/etc/hyperledger/fabric/tls
+        - peer1.org.delivery-network.com:/var/hyperledger/production
+    ports:
+      - 8051:8051
+      - 8053:8053
