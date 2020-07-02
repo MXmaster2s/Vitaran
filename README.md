@@ -12,4 +12,4 @@ This project is envisaged to be a food delivery system that has below advantages
 6. A blockchain-based system allows customers to have a complete history of restaurants and the squad boy. Later, this service can be given to restaurants as well. Because knowledge is power!
 7. Proudly Indian! No Chinese hanky-panky stuff!
 
-![Logo](/images/logo.png)
+![Logo](/others/logo/large.png)
