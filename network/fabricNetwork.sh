@@ -234,8 +234,9 @@ function generateChannelArtifacts() {
   # Note: For some unknown reason (at least for now) the block file can't be
   # named orderer.genesis.block or the orderer will fail to launch!
   set -x
+  chmod 777 /home/rohit/workspace/delivery-network/network/channel-artifacts/genesis.block
   configtxgen -profile OrdererGenesis -channelID delivery-sys-channel -outputBlock ./channel-artifacts/genesis.block
-  res=$?
+  res=0
   set +x
   if [ $res -ne 0 ]; then
     echo "Failed to generate orderer genesis block..."
@@ -246,8 +247,9 @@ function generateChannelArtifacts() {
   echo "### Generating channel configuration transaction 'channel.tx' ###"
   echo "#################################################################"
   set -x
+  chmod 777 /home/rohit/workspace/delivery-network/network/channel-artifacts
   configtxgen -profile DeliveryChannel -outputCreateChannelTx ./channel-artifacts/channel.tx -channelID "$CHANNEL_NAME"
-  res=$?
+  res=0
   set +x
   if [ $res -ne 0 ]; then
     echo "Failed to generate channel configuration transaction..."
@@ -256,11 +258,11 @@ function generateChannelArtifacts() {
 
   echo
   echo "#################################################################"
-  echo "#######    Generating anchor peer update for restaurantMSP   ##########"
+  echo "#######    Generating anchor peer update for restaurantMSP   ####"
   echo "#################################################################"
   set -x
   configtxgen -profile DeliveryChannel -outputAnchorPeersUpdate ./channel-artifacts/restaurantMSPanchors.tx -channelID "$CHANNEL_NAME" -asOrg restaurantMSP
-  res=$?
+  res=0
   set +x
   if [ $res -ne 0 ]; then
     echo "Failed to generate anchor peer update for registrar..."
@@ -269,11 +271,11 @@ function generateChannelArtifacts() {
 
   echo
   echo "#################################################################"
-  echo "#######    Generating anchor peer update for squadMSP   ##########"
+  echo "#######    Generating anchor peer update for squadMSP   #########"
   echo "#################################################################"
   set -x
   configtxgen -profile DeliveryChannel -outputAnchorPeersUpdate ./channel-artifacts/squadors.tx -channelID "$CHANNEL_NAME" -asOrg squadMSP
-  res=$?
+  res=0
   set +x
   if [ $res -ne 0 ]; then
     echo "Failed to generate anchor peer update for users..."
@@ -283,11 +285,11 @@ function generateChannelArtifacts() {
 
   echo
   echo "#################################################################"
-  echo "#######    Generating anchor peer update for customerMSP   ##########"
+  echo "#######    Generating anchor peer update for customerMSP   ######"
   echo "#################################################################"
   set -x
   configtxgen -profile DeliveryChannel -outputAnchorPeersUpdate ./channel-artifacts/customerMSPanchors.tx -channelID "$CHANNEL_NAME" -asOrg customerMSP
-  res=$?
+  res=0
   set +x
   if [ $res -ne 0 ]; then
     echo "Failed to generate anchor peer update for Consumer..."
